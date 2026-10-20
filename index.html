@@ -1,0 +1,175 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>カップルイラストランダマイザー v1.0 RC1 安定重視版</title><style>
+:root{font-family:system-ui,"Noto Sans JP",sans-serif;color:#392f3b;background:#fff8fc}*{box-sizing:border-box}main{max-width:880px;margin:auto;padding:24px 15px}section{background:#fff;border:1px solid #ecd9e4;border-radius:16px;padding:19px;margin:15px 0}h1{font-size:26px}h2{font-size:19px}label{display:block;margin:10px 0 5px;font-weight:600}input,textarea{width:100%;border:1px solid #d8cbd4;border-radius:9px;padding:10px;font:inherit}textarea{min-height:105px}button{border:0;border-radius:10px;background:#a63c73;color:white;padding:12px 17px;cursor:pointer;font-weight:700;margin:4px}button.secondary{background:#f6e5ee;color:#7c3154}.result{white-space:pre-wrap;line-height:1.8;background:#fff8fc;border:1px solid #efd7e4;padding:17px;border-radius:12px}.muted{color:#736773;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.row{grid-template-columns:1fr}}
+</style></head><body><main><h1>🎲 カップルイラストランダマイザー v1.0 RC1</h1><p class="muted">15件の文章チェックで見つかった小指の文法崩れと腕枕のソファ配置を改善。手の大きさ比べの指差し・視線・近接構図も維持。額合わせ・勉強後の膝枕の改善も維持。スキンシップ36種類。オフラインで使えます。試験版のため出力は目視確認してください。</p>
+<section><h2>キャラクター</h2><div class="row"><div><label>A</label><input id="a" value="キャラクターA"></div><div><label>B</label><input id="b" value="キャラクターB"></div></div></section>
+<section><h2>固定プロンプト（編集可能）</h2><label>画風</label><textarea id="stylePrompt"></textarea><label>キャラクター保持</label><textarea id="preservePrompt"></textarea><label>ネガティブプロンプト</label><textarea id="negativePrompt"></textarea><button class="secondary" id="saveSettings">設定を保存</button><button class="secondary" id="resetSettings">初期設定に戻す</button><p id="settingsStatus" class="muted"></p></section>
+<section><h2>生成</h2><button id="generate">🎲 ランダム生成</button><button class="secondary" id="reroll">🔄 もう一度</button><button class="secondary" id="copy">📋 コピー</button><p id="status" class="muted"></p><div id="output" class="result"></div></section>
+<section><h2>この版の方針</h2><p class="muted">活動18種類、スキンシップ36種類。接触ごとに姿勢・動作・構図を1セットで定義し、活動から先に選び、対応する姿勢とスキンシップだけを抽選します。旧版の全候補は削除せず、この安定重視版では抽選対象から外しています。</p></section>
+</main><script>
+const DATA={"activities": [{"label": "映画を見ながらくつろいでいる", "kind": "home", "prop": "テレビや映画の画面が見える"}, {"label": "一緒にゲームを楽しんでいる", "kind": "home", "prop": "ゲーム機やコントローラーが近くにある"}, {"label": "お茶を飲みながら話している", "kind": "seated", "prop": "飲み物の入ったカップがテーブルにある"}, {"label": "思い出話をしている", "kind": "seated", "prop": "落ち着いて会話を楽しんでいる"}, {"label": "一緒に本を読んでいる", "kind": "seated", "prop": "開いた本が二人の近くにある"}, {"label": "勉強を教え合っている", "kind": "table", "prop": "ノートと筆記具が机に置かれている"}, {"label": "写真を見返している", "kind": "seated", "prop": "写真を表示したスマートフォンが見える"}, {"label": "一緒に料理をしている", "kind": "kitchen", "prop": "食材と調理器具が調理台に置かれている"}, {"label": "お菓子を作っている", "kind": "kitchen", "prop": "ボウルと材料が調理台に置かれている"}, {"label": "散歩を楽しんでいる", "kind": "outdoor", "prop": "歩道や散歩道が見える"}, {"label": "景色を眺めている", "kind": "view", "prop": "美しい景色が背景に広がっている"}, {"label": "買い物を楽しんでいる", "kind": "shopping", "prop": "店先の商品や買い物袋が見える"}, {"label": "プレゼントを渡している", "kind": "any", "prop": "小さなプレゼントの包みが見える"}, {"label": "待ち合わせのあとに再会している", "kind": "meeting", "prop": "待ち合わせ場所の目印が背景にある"}, {"label": "一緒に音楽を聴いている", "kind": "seated", "prop": "音楽を再生しているスマートフォンが近くにある"}, {"label": "旅行の計画を立てている", "kind": "table", "prop": "地図や旅行のメモが机にある"}, {"label": "今日あったことを話している", "kind": "any", "prop": "互いの表情を見ながら話している"}, {"label": "夕焼けを眺めている", "kind": "view", "prop": "夕焼けの空が見える"}], "contacts": [{"label": "手をつなぐ", "poseKind": "stand", "pose": "AとBが隣り合って立ち、自然に腕を下ろしている", "action": "AがBの手をそっと握る", "shot": "2人の表情とつないだ手が見える腰から上のツーショット"}, {"label": "恋人つなぎをする", "poseKind": "stand", "pose": "AとBが隣り合って立ち、手を近づけている", "action": "AがBの指に自分の指を絡めて手をつなぐ", "shot": "2人の表情と指を絡めた手が見える腰から上のツーショット"}, {"label": "小指を絡める", "poseKind": "stand", "pose": "AとBが隣り合って立ち、互いの手を近づけている", "action": "AがBの小指に自分の小指を絡める", "shot": "2人の表情と小指が見える上半身ツーショット"}, {"label": "手のひらを重ねる", "poseKind": "sit", "pose": "AとBが隣り合って座り、手を膝の近くに置いている", "action": "AがBの手のひらに自分の手のひらを重ねる", "shot": "2人の表情と重なった手が見える上半身ツーショット"}, {"label": "手を両手で包む", "poseKind": "sit", "pose": "AとBが向かい合って座り、手を届く距離に置いている", "action": "AがBの片手を自分の両手で優しく包む", "shot": "2人の表情と包んだ手が見える上半身ツーショット"}, {"label": "手の甲をなでる", "poseKind": "sit", "pose": "AとBが隣り合って座り、手を近づけている", "action": "AがBの手の甲を指先で優しくなでる", "shot": "2人の表情と手元が見える上半身ツーショット"}, {"label": "指先をなでる", "poseKind": "sit", "pose": "AとBが隣り合って座り、Bが片手を差し出している", "action": "AがBの指先を優しくなでる", "shot": "2人の表情と指先が見える上半身ツーショット"}, {"label": "手の大きさを比べる", "poseKind": "sit", "pose": "AとBが向かい合って座り、手のひらを互いに向けている", "action": "AとBが手のひら同士を合わせて大きさを比べる", "shot": "2人の表情と合わせた手のひらが見える上半身ツーショット"}, {"label": "手のひらに文字を書く", "poseKind": "sit", "pose": "AとBが隣り合って座り、Bが手のひらを上に向けている", "action": "AがBの手のひらに指先で文字を書く", "shot": "2人の表情と手のひらが見える上半身ツーショット"}, {"label": "指先同士を合わせる", "poseKind": "sit", "pose": "AとBが向かい合って座り、手を胸の前に上げている", "action": "AとBが互いの指先をそっと合わせる", "shot": "2人の表情と触れ合う指先が見える上半身ツーショット"}, {"label": "ハイタッチする", "poseKind": "stand", "pose": "AとBが向かい合って立ち、片手を肩の高さに上げている", "action": "AとBが片手同士でハイタッチする", "shot": "2人の表情とハイタッチする手が見える上半身ツーショット"}, {"label": "グータッチする", "poseKind": "stand", "pose": "AとBが向かい合って立ち、拳を胸の前に出している", "action": "AとBが拳同士を軽く合わせる", "shot": "2人の表情と拳が見える上半身ツーショット"}, {"label": "肩に手を添える", "poseKind": "stand", "pose": "AとBが隣り合って立ち、AがBの肩へ手を伸ばせる距離にいる", "action": "AがBの肩に優しく手を添える", "shot": "2人の表情と肩に置いた手が見える上半身ツーショット"}, {"label": "肩を抱き寄せる", "poseKind": "stand", "pose": "AとBが隣り合って立ち、肩が触れ合う距離にいる", "action": "AがBの肩に腕を回してそっと抱き寄せる", "shot": "2人の表情と肩に回した腕が見える上半身ツーショット"}, {"label": "頭をなでる", "poseKind": "stand", "pose": "AとBが向かい合って立ち、AがBの頭に手を伸ばせる距離にいる", "action": "AがBの頭を優しくなでる", "shot": "2人の表情と頭に触れる手が見える上半身ツーショット"}, {"label": "髪を耳にかける", "poseKind": "stand", "pose": "AとBが向かい合って立ち、顔を近づけている", "action": "AがBの顔にかかった髪を指先で耳にかける", "shot": "2人の表情と髪に触れる指先が見える上半身ツーショット"}, {"label": "頬に手を添える", "poseKind": "stand", "pose": "AとBが向かい合って立ち、顔に手が届く距離にいる", "action": "AがBの頬に手のひらを優しく添える", "shot": "2人の表情と頬に触れる手が見える上半身ツーショット"}, {"label": "鼻先を合わせる", "poseKind": "stand", "pose": "AとBが向かい合って立ち、互いに顔を少し傾けている", "action": "AとBが鼻先をそっと触れ合わせる", "shot": "2人の横顔と鼻先の接触が見える斜め前からの上半身ツーショット"}, {"label": "額を合わせる", "poseKind": "stand", "pose": "AとBが向かい合って立ち、互いに少し顔を傾けている", "action": "AとBが額をそっと触れ合わせる", "shot": "2人の横顔と額の接触が見える斜め前からの上半身ツーショット"}, {"label": "頬にキスする", "poseKind": "stand", "pose": "AとBが向かい合って立ち、AがBの頬に顔を近づけている", "action": "AがBの頬に軽くキスする", "shot": "Aの口元とBの頬の接触が見える斜め前からの上半身ツーショット"}, {"label": "額にキスする", "poseKind": "stand", "pose": "AとBが向かい合って立ち、AがBの額へ顔を近づけている", "action": "AがBの額に優しくキスする", "shot": "Aの口元とBの額の接触が見える斜め横からの上半身ツーショット"}, {"label": "手の甲にキスする", "poseKind": "sit", "pose": "AとBが向かい合って座り、AがBの片手を自分の口元に持ち上げている", "action": "AがBの手の甲に優しくキスする", "shot": "Aの口元とBの手の甲の接触が見える斜め前からの上半身ツーショット"}, {"label": "指先にキスする", "poseKind": "sit", "pose": "AとBが向かい合って座り、AがBの指先を自分の口元に近づけている", "action": "AがBの指先に優しくキスする", "shot": "Aの口元とBの指先の接触が見える斜め前からの上半身ツーショット"}, {"label": "正面からハグする", "poseKind": "stand", "pose": "AとBが向かい合って立ち、腕を回せる距離まで近づいている", "action": "AがBを正面から優しく抱きしめる", "shot": "2人の表情と背中に回した腕が見える斜め前からの上半身ツーショット"}, {"label": "後ろからハグする", "poseKind": "stand", "pose": "Bが立ち、AがBのすぐ後ろに立っている", "action": "AがBの背中側から腕を回して優しく抱きしめる", "shot": "Bの表情と背後から回したAの腕が見える斜め前からの上半身ツーショット"}, {"label": "腕を組む", "poseKind": "stand", "pose": "AとBが隣り合って立ち、肘を近づけている", "action": "AがBの腕に自分の腕を絡める", "shot": "2人の表情と組んだ腕が見える上半身ツーショット"}, {"label": "肩に頭を乗せる", "poseKind": "sit", "pose": "AとBが隣り合って座り、肩が触れ合う距離にいる", "action": "AがBの肩に自分の頭をそっと預ける", "shot": "2人の表情と肩に預けた頭が見える上半身ツーショット"}, {"label": "肩にあごを乗せる", "poseKind": "sit", "pose": "AとBが隣り合って座り、AがBの肩へ少し身を寄せている", "action": "AがBの肩にあごをそっと乗せる", "shot": "2人の表情と肩に乗せたあごが見える斜め前からの上半身ツーショット"}, {"label": "背中に手を添える", "poseKind": "stand", "pose": "Bが少し斜めを向いて立ち、AがBの斜め後ろに立っている", "action": "AがBの背中に手を優しく添える", "shot": "Bの横顔と背中に添えたAの手が見える斜め後方からの上半身ツーショット"}, {"label": "背中をさする", "poseKind": "stand", "pose": "Bが少し斜めを向いて立ち、AがBの斜め後ろに立っている", "action": "AがBの背中を優しくさする", "shot": "Bの横顔と背中をさするAの手が見える斜め後方からの上半身ツーショット"}, {"label": "肘同士を合わせる", "poseKind": "sit", "pose": "AとBが隣り合って座り、互いの肘が届く距離にいる", "action": "AとBが肘同士を軽く触れ合わせる", "shot": "2人の表情と触れ合う肘が見える上半身ツーショット"}, {"label": "膝同士を触れ合わせる", "poseKind": "sit", "pose": "AとBが隣り合って座り、膝が近づく距離にいる", "action": "AとBが膝同士をそっと触れ合わせる", "shot": "2人の表情と膝の接触が見える膝から上のツーショット"}, {"label": "膝枕をする", "poseKind": "rest", "pose": "Aがソファやベッドに座り、Bが横になってAの膝に頭を預けている", "action": "AがBに膝枕をして、Bの頭を優しく支える", "shot": "Aの表情とBの顔、膝枕の位置関係が見える広めのツーショット"}, {"label": "腕枕をする", "poseKind": "rest", "pose": "AとBがソファやベッドに横になり、BがAの腕に頭を預けている", "action": "AがBに腕枕をする", "shot": "2人の顔と腕枕の位置関係が見える斜め上からの広めのツーショット"}, {"label": "隣り合って寄り添う", "poseKind": "sit", "pose": "AとBが隣り合って座り、肩が触れ合う距離にいる", "action": "AとBが肩を寄せ合ってくつろぐ", "shot": "2人の表情と肩が触れ合う様子が見える上半身ツーショット"}, {"label": "頬同士を寄せる", "poseKind": "sit", "pose": "AとBが隣り合って座り、互いに顔を少し傾けている", "action": "AとBが頬同士をそっと寄せる", "shot": "2人の表情と頬の接触が見える上半身ツーショット"}], "places": {"home": ["一般的な家庭のリビング", "ホテルの客室"], "seated": ["リビングのソファ", "落ち着いたカフェの席", "公園のベンチ", "ホテルのラウンジ"], "table": ["自宅のダイニング", "落ち着いたカフェのテーブル", "自宅の書斎"], "kitchen": ["自宅のキッチン", "広い調理台のあるキッチン"], "outdoor": ["緑豊かな公園の散歩道", "川沿いの遊歩道", "海辺の遊歩道", "桜並木の道"], "view": ["見晴らしのよい公園", "山小屋の窓辺", "海を望む展望テラス", "花びらが舞う庭"], "shopping": ["ショッピングモール", "商店街の店先", "スーパーマーケットの売り場"], "meeting": ["駅前の広場", "公園の入口", "待ち合わせ用のカフェ前"], "any": ["一般的な家庭のリビング", "公園のベンチ", "花びらが舞う庭", "山小屋の窓辺", "海を望む展望テラス"]}, "restplaces": ["リビングのソファ", "ホテルの客室のベッド"], "allowed": {"stand": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], "sit": [0, 1, 2, 3, 4, 5, 6, 10, 12, 14, 15, 16, 17], "rest": [0, 3, 6, 14, 16]}};
+const DEFAULTS={
+stylePrompt:'現代的な日本のTVアニメ風イラスト。自然で親しみやすいアニメキャラクターデザイン。すっきりした輪郭線、整理された髪の束感、フラットなベースカラー、1〜2段階の明確なセル影。過剰なグラデーションや細密描写を避け、シンプルで読みやすい色面構成。自然なアニメらしい光と陰影。',
+preservePrompt:'【キャラクターの再現・保持】\n添付した参照画像を基準として、キャラクターA・Bそれぞれの顔立ち、目の形、瞳の色、髪色、前髪、年齢感、体型、胸のサイズ、肌の色、キャラクター性をできる限り忠実に維持してください。\n表情、視線、ポーズはシチュエーションに応じて自然に変化させてください。AとBの外見的特徴を混同したり、入れ替えたりしないでください。',
+negativePrompt:'極細の毛髪、糸状の髪、過剰な毛束分離、蜘蛛の巣状の金刺繍、無秩序な金線、糸くず状の装飾、過密なレース、過剰なマイクロディテール、細線の乱立、無駄に多い描き込み、光点、ノイズ\nbad hands, extra fingers, missing fingers, mutated hands, extra arms, bad legs, missing limb, disconnected limbs, deformed, mutated, bad proportions'};
+const $=id=>document.getElementById(id);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const recentActivities=[];
+const recentContacts=[];
+function chooseWithHistory(pool,history,windowSize){
+  const candidates=pool.filter(x=>!history.includes(x.label));
+  const chosen=pick(candidates.length?candidates:pool);
+  history.push(chosen.label);
+  if(history.length>windowSize)history.shift();
+  return chosen;
+}
+const recentCompositions=[];
+function pickComposition(candidates){
+  const scored=candidates.map(item=>{
+    const last=recentCompositions.slice(-7);
+    const penalty=last.reduce((n,x,i)=>n+(x===item.key?20+i*2:0),0);
+    return {...item,penalty};
+  });
+  const minimum=Math.min(...scored.map(x=>x.penalty));
+  const best=scored.filter(x=>x.penalty===minimum);
+  const result=pick(best);
+  recentCompositions.push(result.key);
+  if(recentCompositions.length>8)recentCompositions.shift();
+  return result;
+}
+function build(){
+  const act=chooseWithHistory(DATA.activities,recentActivities,5);
+  const seated=['home','seated','table'];
+  const standing=['outdoor','shopping','meeting','kitchen'];
+  const modes=seated.includes(act.kind)?['sit','rest']:standing.includes(act.kind)?['stand']:['sit','stand'];
+  let pool=DATA.contacts.filter(c=>modes.includes(c.poseKind));
+  if(['home','seated','table','view'].includes(act.kind))pool=pool.filter(c=>!['ハイタッチする','グータッチする'].includes(c.label));
+  if(['kitchen','shopping'].includes(act.kind))pool=pool.filter(c=>!['正面からハグする','後ろからハグする','背中をさする'].includes(c.label));
+  if(['meeting','outdoor','shopping'].includes(act.kind))pool=pool.filter(c=>c.label!=='背中をさする');
+  if(act.kind==='any' && /プレゼント/.test(act.label))pool=pool.filter(c=>!['後ろからハグする','背中をさする'].includes(c.label));
+  const c=chooseWithHistory(pool,recentContacts,5);
+  let place;
+  if(c.poseKind==='rest')place=pick(DATA.restplaces);
+  else if(c.poseKind==='sit' && act.kind==='view')place=pick(['山小屋の窓辺のベンチ','海を望む展望テラスのベンチ','花びらが舞う庭のベンチ']);
+  else if(c.poseKind==='sit' && act.kind==='any')place=pick(DATA.places.seated);
+  else if(c.poseKind==='sit' && act.kind==='home')place='リビングのソファ';
+  else if(c.poseKind==='stand' && act.kind==='any')place=pick(['公園の散歩道','花びらが舞う庭','駅前の広場']);
+  else place=pick(DATA.places[act.kind]);
+  const a=$('a').value.trim()||'キャラクターA',b=$('b').value.trim()||'キャラクターB';
+  const substitute=str=>str.replace(/A|B/g,m=>m==='A'?a:b);
+  let pose=c.pose, action=c.action, shot=c.shot;
+  const movie=/映画を見/.test(act.label);
+  const watching=/映画を見|夕焼けを眺め|景色を眺め/.test(act.label);
+  const tabletop=/カフェ|ダイニング|書斎|テーブル/.test(place);
+  const sofa=/ソファ/.test(place);
+  if(c.poseKind==='rest'){
+    pose=pose.replaceAll('ソファやベッド',place.includes('ベッド')?'ベッド':'ゆったりした幅の広いソファ');
+  }
+  if(c.poseKind==='sit' && /向かい合って座り/.test(pose)){
+    if(sofa)pose=pose.replace('向かい合って座り','同じソファに隣り合って座り、互いの方へ上半身を向け');
+    else if(watching)pose=pose.replace('向かい合って座り','同じ方向を向いて隣り合って座り、触れ合うときだけ互いの方へ上半身を向け');
+    else if(act.kind==='table')pose=pose.replace('向かい合って座り','机の角を挟んで手が届く距離に向かい合って座り');
+    else if(tabletop)pose=pose.replace('向かい合って座り','小さなテーブルの角を挟んで手が届く距離に向かい合って座り');
+    else if(/ベンチ/.test(place))pose=pose.replace('向かい合って座り','同じベンチに隣り合って座り、互いの方へ上半身を向け');
+  }else if(c.poseKind==='sit' && /隣り合って座り/.test(pose) && act.kind==='table'){
+    pose=pose.replace('隣り合って座り','机の同じ側に隣り合って座り');
+  }
+  if(c.poseKind==='sit' && /向かい合って座り/.test(pose) && /ベンチ/.test(place)){
+    pose=pose.replace('向かい合って座り','同じベンチに隣り合って座り、互いの方へ上半身を向け');
+  }
+  // 画像生成テストで確認したポーズの明確化
+  if(c.label==='手の大きさを比べる'){
+    // 合格した画像テストの手元配置を優先する。Bの空いた手だけを指差しに使う。
+    pose += '。ふたりは片手ずつを胸の高さに上げ、指を自然に伸ばしている。Aの空いている手は膝の上に置く。Bの空いている手は人差し指だけを伸ばし、合わせた指先の長さを示している';
+    action='AとBが片手ずつの手のひらを正面からそっと合わせ、指先の長さを比べる。Bは合わせていない方の手の人差し指で指先の長さの違いを示す。Aは合わせた指先を見つめ、Bも指先へ視線を向けて微笑む。手を勢いよく打ち合わせるハイタッチではない';
+    shot='ふたりの顔と、正面から合わせた手のひら、Bの指差す人差し指が大きく見える、手元を主役にした斜め前からの近めの上半身ツーショット。手の接触と指差しが隠れない構図';
+  }
+  if(c.label==='額を合わせる'){
+    pose += '。ふたりの腕は自然に下ろし、手を握ったり相手の頭に触れたりしない';
+    action='AとBが額の中央をそっと触れ合わせる。前髪で接触部分が隠れないように顔をわずかに横へ向け、鼻先ではなく額同士を合わせる';
+    shot='2人の横顔と額の接触位置が前髪に隠れず確認できる斜め横からの上半身ツーショット';
+  }
+  const context=[];
+  let prop=act.prop;
+  if(c.poseKind==='rest'){
+    if(/勉強を教え合っている/.test(act.label)){
+      prop='勉強に使ったノートと筆記具がソファの前のローテーブルに置かれている';
+      context.push('勉強をひと区切り終え、ふたりがソファで休憩している瞬間');
+    }else if(/ゲーム/.test(act.label)){
+      prop=place.includes('ベッド')?'遊び終えた携帯ゲーム機がベッド脇のサイドテーブルに置かれている':'遊び終えた携帯ゲーム機がソファ横のテーブルに置かれている';
+      context.push('ゲームを終えてふたりがくつろぐ瞬間');
+    }else if(/本を読/.test(act.label)){
+      prop='読みかけの本がふたりのすぐ近くに置かれている';
+      context.push('本をいったん置き、ふたりがくつろぎ始めた瞬間');
+    }else if(/写真を見/.test(act.label)){
+      prop='写真を表示したスマートフォンがふたりの近くに置かれている';
+      context.push('写真を見終えて、ふたりがくつろぐ瞬間');
+    }else if(/お茶を飲/.test(act.label)){
+      prop='飲み終えたお茶のカップがソファの前のテーブルに置かれている';
+      context.push('お茶を飲み終え、カップを置いてふたりがくつろぐ瞬間');
+    }else if(movie)context.push('映画を眺めながらふたりがくつろいでいる');
+  }else if(/料理|お菓子/.test(act.label))context.push('調理器具から手を離し、火元から離れた場所でひと休みする瞬間');
+  else if(/勉強|ゲーム|本を読|写真を見|旅行の計画/.test(act.label))context.push('作業をいったん止めてふたりが触れ合う瞬間');
+  if(act.kind==='shopping' && ['鼻先を合わせる','額を合わせる','頬にキスする','額にキスする','正面からハグする','頬に手を添える'].includes(c.label)){
+    context.push('買い物の途中、人通りを避けた店先の脇で立ち止まった瞬間');
+  }
+  if(act.kind==='meeting' && ['鼻先を合わせる','額を合わせる','頬にキスする','額にキスする','正面からハグする'].includes(c.label)){
+    context.push('人の流れから少し離れて立ち止まった瞬間');
+  }
+  if(watching && c.poseKind==='stand' && /向かい合って立ち/.test(pose))context.push('景色を眺めていたふたりが一度視線を交わす瞬間');
+  if(/散歩/.test(act.label) && /向かい合って立ち/.test(pose))context.push('散歩の途中で立ち止まった瞬間');
+  const bridges={
+    '手のひらに文字を書く':'ふたりは遊び心から手のひらで秘密のメッセージを伝え合う',
+    '手の大きさを比べる':'ふたりは会話の流れで手の大きさを比べ始める',
+    '背中をさする':'Bが少し疲れた様子を見せ、Aがそっと気遣う'
+  };
+  if(bridges[c.label])context.push(bridges[c.label]);
+  const celebrations={
+    '散歩を楽しんでいる':'散歩中に話していたことが偶然一致し、ふたりは笑顔になる',
+    '買い物を楽しんでいる':'気に入った商品を一緒に見つけ、ふたりは笑顔になる',
+    '一緒に料理をしている':'料理がうまく仕上がり、ふたりは喜び合う',
+    'お菓子を作っている':'お菓子がきれいに仕上がり、ふたりは喜び合う',
+    '待ち合わせのあとに再会している':'無事に会えたことがうれしく、ふたりは笑顔になる'
+  };
+  if(['ハイタッチする','グータッチする'].includes(c.label))context.push(celebrations[act.label]||'話していたことがぴったり一致し、ふたりは笑顔になる');
+  let sceneActivity=act.label;
+  if(/プレゼントを渡している/.test(act.label)){
+    sceneActivity='プレゼントを渡したあとの';
+    if(c.poseKind==='sit')prop='渡し終えた小さなプレゼントの包みがふたりのそばに置かれている';
+    else prop='渡し終えた小さなプレゼントの包みがBの片手にある';
+    context.unshift('プレゼントを受け取ったBとAが、うれしそうに触れ合う瞬間');
+    if(c.poseKind==='stand' && /手をそっと握る|指に自分の指を絡め|小指に自分の小指を絡め/.test(action)){
+      action=action.replace('Bの手','Bの空いている方の手').replace('Bの指','Bの空いている方の手の指').replace('Bの小指','Bの空いている方の手の小指');
+      pose=pose.replace('自然に腕を下ろしている','Bは包みを持っていない方の腕を自然に下ろしている');
+    }
+  }
+  if(/勉強を教え合っている/.test(act.label) && c.poseKind==='rest'){
+    sceneActivity='勉強を終えて休憩している';
+  }
+  if(/お茶を飲みながら話している/.test(act.label) && c.poseKind==='rest'){
+    sceneActivity='お茶を飲み終えてくつろいでいる';
+  }
+  if(/プレゼントを渡している/.test(act.label) && c.poseKind==='stand' && /手をそっと握る|指に自分の指を絡め|小指に自分の小指を絡め/.test(c.action)){
+    pose=pose.replace('互いの手を近づけている','Bは包みを持っていない方の手をAへ近づけている');
+    if(!/Bは包みを持っていない方の手/.test(pose))pose=pose.replace('手を近づけている','Bは包みを持っていない方の手をAへ近づけている');
+  }
+  if(/手のひらを重ねる|手の甲をなでる|指先をなでる|手のひらに文字を書く|手を両手で包む/.test(c.label) && /上半身ツーショット/.test(shot)){
+    shot=shot.replace('上半身ツーショット','手元まで収まる腰から上のツーショット');
+  }
+  const candidates=[{key:'正面',tail:''},{key:'斜め前',tail:'カメラは斜め前から捉える'},{key:'少し横',tail:'カメラは少し横から捉える'}];
+  const composition=pickComposition(candidates);
+  if(composition.tail && !/斜め前から|斜め横から|斜め後方から|斜め上から/.test(shot))shot+='。'+composition.tail;
+  const extra=context.length?'。'+substitute(context.join('。')):'';
+  const scene=`【場面】\n${a}と${b}は「${sceneActivity}」場面にいる。場所は「${place}」。${substitute(prop)}${extra}。\n\n【ふたりの動き】\n${substitute(pose)}。${substitute(action)}。\n\n【カメラ・構図】\n${substitute(shot)}。接触部位と身体の向きが自然に伝わる角度にする。`;
+  const full=scene+'\n\n【画風】\n'+$('stylePrompt').value+'\n\n'+$('preservePrompt').value+'\n\n【ネガティブプロンプト】\n'+$('negativePrompt').value;
+  $('output').textContent=full;
+  $('status').textContent=`活動：${act.label} / 場所：${place} / スキンシップ：${c.label}`;
+  return {act,c,place,full,pose,action,shot};
+}
+function save(){for(const k of ['stylePrompt','preservePrompt','negativePrompt'])localStorage.setItem('v07t_'+k,$(k).value);$('settingsStatus').textContent='設定を保存しました。';}
+function reset(){for(const k of ['stylePrompt','preservePrompt','negativePrompt']){$(k).value=DEFAULTS[k];localStorage.removeItem('v07t_'+k)}$('settingsStatus').textContent='初期設定に戻しました。';build();}
+for(const k of ['stylePrompt','preservePrompt','negativePrompt'])$(k).value=localStorage.getItem('v07t_'+k)||localStorage.getItem('v07s_'+k)||localStorage.getItem('v07r_'+k)||localStorage.getItem('v07q_'+k)||localStorage.getItem('v07p_'+k)||localStorage.getItem('v07n_'+k)||DEFAULTS[k];
+$('generate').addEventListener('click',build);$('reroll').addEventListener('click',build);
+$('copy').addEventListener('click',()=>navigator.clipboard.writeText($('output').textContent));
+$('saveSettings').addEventListener('click',save);$('resetSettings').addEventListener('click',reset);
+build();
+</script></body></html>
